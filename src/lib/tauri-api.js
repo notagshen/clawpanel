@@ -99,6 +99,8 @@ function mockInvoke(cmd, args) {
     upgrade_openclaw: () => '升级成功，当前版本: 2026.2.26-zh.3 (mock)',
     install_gateway: () => 'Gateway 服务已安装 (mock)',
     uninstall_gateway: () => 'Gateway 服务已卸载 (mock)',
+    get_npm_registry: () => 'https://registry.npmmirror.com',
+    set_npm_registry: () => true,
     test_model: ({ modelId }) => `模型 ${modelId} 连通正常 (mock)`,
     list_remote_models: () => ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o3-mini', 'dall-e-3', 'text-embedding-3-small'],
     write_env_file: () => true,
@@ -144,6 +146,8 @@ export const api = {
   upgradeOpenclaw: (source = 'chinese') => invoke('upgrade_openclaw', { source }),
   installGateway: () => invoke('install_gateway'),
   uninstallGateway: () => invoke('uninstall_gateway'),
+  getNpmRegistry: () => invoke('get_npm_registry'),
+  setNpmRegistry: (registry) => invoke('set_npm_registry', { registry }),
   testModel: (baseUrl, apiKey, modelId) => invoke('test_model', { baseUrl, apiKey, modelId }),
   listRemoteModels: (baseUrl, apiKey) => invoke('list_remote_models', { baseUrl, apiKey }),
 

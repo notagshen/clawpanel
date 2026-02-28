@@ -6,6 +6,26 @@ use std::process::Command;
 
 use crate::models::types::VersionInfo;
 
+/// 预设 npm 源列表
+const DEFAULT_REGISTRY: &str = "https://registry.npmmirror.com";
+
+/// 读取用户配置的 npm registry，fallback 到淘宝镜像
+fn get_configured_registry() -> String {
+    let path = super::openclaw_dir().join("npm-registry.txt");
+    fs::read_to_string(&path)
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| DEFAULT_REGISTRY.to_string())
+}
+
+/// 创建使用配置源的 npm Command
+fn npm_command() -> Command {
+    let mut cmd = Command::new("npm");
+    cmd.args(["--registry", &get_configured_registry()]);
+    cmd
+}
+
 fn backups_dir() -> PathBuf {
     super::openclaw_dir().join("backups")
 }
@@ -76,7 +96,8 @@ async fn get_latest_version_for(source: &str) -> Option<String> {
         .build()
         .ok()?;
     let pkg = npm_package_name(source).replace('/', "%2F").replace('@', "%40");
-    let url = format!("https://registry.npmjs.org/{pkg}/latest");
+    let registry = get_configured_registry();
+    let url = format!("{registry}/{pkg}/latest");
     let resp = client.get(&url).send().await.ok()?;
     let json: Value = resp.json().await.ok()?;
     json.get("version")
@@ -95,7 +116,7 @@ fn detect_installed_source() -> String {
         return "official".into();
     }
     // 方法2：fallback 到 npm list
-    if let Ok(o) = Command::new("npm")
+    if let Ok(o) = npm_command()
         .args(["list", "-g", "@qingchencloud/openclaw-zh", "--depth=0"])
         .output()
     {
@@ -151,7 +172,7 @@ pub async fn upgrade_openclaw(app: tauri::AppHandle, source: String) -> Result<S
         let old_pkg = npm_package_name(&current_source);
         let _ = app.emit("upgrade-log", format!("正在卸载旧版本 ({old_pkg})..."));
         let _ = app.emit("upgrade-progress", 5);
-        let _ = Command::new("npm")
+        let _ = npm_command()
             .args(["uninstall", "-g", old_pkg])
             .output();
     }
@@ -159,7 +180,7 @@ pub async fn upgrade_openclaw(app: tauri::AppHandle, source: String) -> Result<S
     let _ = app.emit("upgrade-log", format!("$ npm install -g {pkg}"));
     let _ = app.emit("upgrade-progress", 10);
 
-    let mut child = Command::new("npm")
+    let mut child = npm_command()
         .args(["install", "-g", &pkg])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -568,4 +589,16 @@ pub fn uninstall_gateway() -> Result<String, String> {
     }
 
     Ok("Gateway 服务已卸载".to_string())
+}
+
+#[tauri::command]
+pub fn get_npm_registry() -> Result<String, String> {
+    Ok(get_configured_registry())
+}
+
+#[tauri::command]
+pub fn set_npm_registry(registry: String) -> Result<(), String> {
+    let path = super::openclaw_dir().join("npm-registry.txt");
+    fs::write(&path, registry.trim())
+        .map_err(|e| format!("保存失败: {e}"))
 }

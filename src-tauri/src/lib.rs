@@ -25,6 +25,8 @@ pub fn run() {
             config::upgrade_openclaw,
             config::install_gateway,
             config::uninstall_gateway,
+            config::get_npm_registry,
+            config::set_npm_registry,
             // 服务
             service::get_services_status,
             service::start_service,

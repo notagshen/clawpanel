@@ -27,6 +27,10 @@ export async function render() {
     </div>
     <div id="version-bar"></div>
     <div id="services-list">加载中...</div>
+    <div class="config-section" id="registry-section">
+      <div class="config-section-title">npm 源设置</div>
+      <div id="registry-bar">加载中...</div>
+    </div>
     <div class="config-section" id="backup-section">
       <div class="config-section-title">配置备份</div>
       <div id="backup-actions" style="margin-bottom:var(--space-md)">
@@ -45,6 +49,7 @@ async function loadAll(page) {
   await Promise.all([
     loadVersion(page),
     loadServices(page),
+    loadRegistry(page),
     loadBackups(page),
   ])
 }
@@ -82,6 +87,41 @@ async function loadVersion(page) {
     `
   } catch (e) {
     bar.innerHTML = `<div class="stat-card" style="margin-bottom:var(--space-lg)"><div class="stat-card-label">版本信息加载失败</div></div>`
+  }
+}
+
+// ===== npm 源设置 =====
+
+const REGISTRIES = [
+  { label: '淘宝镜像 (推荐)', value: 'https://registry.npmmirror.com' },
+  { label: 'npm 官方源', value: 'https://registry.npmjs.org' },
+  { label: '华为云镜像', value: 'https://repo.huaweicloud.com/repository/npm/' },
+]
+
+async function loadRegistry(page) {
+  const bar = page.querySelector('#registry-bar')
+  try {
+    const current = await api.getNpmRegistry()
+    const isPreset = REGISTRIES.some(r => r.value === current)
+    bar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:var(--space-sm);flex-wrap:wrap">
+        <select class="form-input" data-name="registry" style="max-width:320px">
+          ${REGISTRIES.map(r => `<option value="${r.value}" ${r.value === current ? 'selected' : ''}>${r.label}</option>`).join('')}
+          <option value="custom" ${!isPreset ? 'selected' : ''}>自定义</option>
+        </select>
+        <input class="form-input" data-name="custom-registry" placeholder="https://..." value="${isPreset ? '' : escapeHtml(current)}" style="max-width:320px;${isPreset ? 'display:none' : ''}">
+        <button class="btn btn-primary btn-sm" data-action="save-registry">保存</button>
+      </div>
+      <div class="form-hint" style="margin-top:var(--space-xs)">升级和版本检测使用此源下载 npm 包，国内用户推荐淘宝镜像</div>
+    `
+    // 切换预设/自定义
+    const select = bar.querySelector('[data-name="registry"]')
+    const customInput = bar.querySelector('[data-name="custom-registry"]')
+    select.onchange = () => {
+      customInput.style.display = select.value === 'custom' ? '' : 'none'
+    }
+  } catch (e) {
+    bar.innerHTML = `<div style="color:var(--error)">加载失败: ${escapeHtml(String(e))}</div>`
   }
 }
 
@@ -214,6 +254,9 @@ function bindEvents(page) {
         case 'uninstall-gateway':
           await handleUninstallGateway(btn, page)
           break
+        case 'save-registry':
+          await handleSaveRegistry(btn, page)
+          break
       }
     } catch (e) {
       toast(e.toString(), 'error')
@@ -309,4 +352,14 @@ async function handleUninstallGateway(btn, page) {
   await api.uninstallGateway()
   toast('Gateway 服务已卸载', 'success')
   await loadServices(page)
+}
+
+async function handleSaveRegistry(btn, page) {
+  const section = page.querySelector('#registry-section')
+  const select = section.querySelector('[data-name="registry"]')
+  const customInput = section.querySelector('[data-name="custom-registry"]')
+  const registry = select.value === 'custom' ? customInput.value.trim() : select.value
+  if (!registry) { toast('请输入源地址', 'error'); return }
+  await api.setNpmRegistry(registry)
+  toast('npm 源已保存', 'success')
 }
