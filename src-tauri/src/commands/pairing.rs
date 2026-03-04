@@ -62,8 +62,8 @@ pub fn auto_pair_device() -> Result<String, String> {
         "deviceId": device_id,
         "publicKey": public_key,
         "platform": "desktop",
-        "clientId": "gateway-client",
-        "clientMode": "backend",
+        "clientId": "openclaw-control-ui",
+        "clientMode": "ui",
         "role": "operator",
         "roles": ["operator"],
         "scopes": [

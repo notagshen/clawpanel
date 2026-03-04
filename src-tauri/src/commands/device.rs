@@ -101,8 +101,10 @@ pub fn create_connect_frame(nonce: String, gateway_token: String) -> Result<Valu
 
     let scopes_str = SCOPES.join(",");
     // v3 格式：v3|deviceId|clientId|clientMode|role|scopes|signedAt|token|nonce|platform|deviceFamily
+    // 使用 openclaw-control-ui + ui 模式，使 Gateway 识别为 Control UI 客户端，
+    // 本地连接时触发静默自动配对（shouldAllowSilentLocalPairing = true）
     let payload_str = format!(
-        "v3|{device_id}|gateway-client|backend|operator|{scopes_str}|{signed_at}|{gateway_token}|{nonce}|{platform}|{device_family}"
+        "v3|{device_id}|openclaw-control-ui|ui|operator|{scopes_str}|{signed_at}|{gateway_token}|{nonce}|{platform}|{device_family}"
     );
 
     let signature = signing_key.sign(payload_str.as_bytes());
@@ -116,11 +118,11 @@ pub fn create_connect_frame(nonce: String, gateway_token: String) -> Result<Valu
             "minProtocol": 3,
             "maxProtocol": 3,
             "client": {
-                "id": "gateway-client",
+                "id": "openclaw-control-ui",
                 "version": "1.0.0",
                 "platform": platform,
                 "deviceFamily": device_family,
-                "mode": "backend"
+                "mode": "ui"
             },
             "role": "operator",
             "scopes": SCOPES,

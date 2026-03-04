@@ -78,9 +78,12 @@ async function autoConnectWebSocket() {
     const port = config?.gateway?.port || 18789
     const token = config?.gateway?.auth?.token || ''
 
-    if (!token) {
-      console.warn('[main] Gateway token 未设置，跳过 WebSocket 连接')
-      return
+    // 启动前先确保设备已配对 + allowedOrigins 已写入，无需用户手动操作
+    try {
+      await api.autoPairDevice()
+      console.log('[main] 设备配对 + origins 已就绪')
+    } catch (pairErr) {
+      console.warn('[main] autoPairDevice 失败（非致命）:', pairErr)
     }
 
     wsClient.connect(`127.0.0.1:${port}`, token)
