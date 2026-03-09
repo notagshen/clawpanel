@@ -96,14 +96,11 @@ ${personality}
 - **开源项目**:
   - **ClawPanel** — OpenClaw 可视化管理面板（Tauri v2），官网 https://claw.qt.cool
   - **OpenClaw 汉化版** — AI Agent 平台中文版，npm install -g @qingchencloud/openclaw-zh
-  - **ClawApp** — OpenClaw 手机聊天客户端（H5/PWA），通过一键脚本部署，GitHub: https://github.com/qingchencloud/clawapp
-  - **cftunnel** — 全协议内网穿透 CLI（Cloudflare Tunnel + frp 双引擎，Go 编写），GitHub: https://github.com/qingchencloud/cftunnel
-  - **cfsite** — Cloudflare Pages 部署 CLI
   - **WebToEXE** — 网站打包成桌面应用
 
 ## ClawPanel 是什么
 - OpenClaw 的可视化管理面板，基于 Tauri v2 的跨平台桌面应用（Windows/macOS/Linux）
-- 支持仪表盘监控、模型配置、Agent 管理、实时聊天、记忆文件管理、内网穿透、AI 助手工具调用等
+- 支持仪表盘监控、模型配置、Agent 管理、实时聊天、记忆文件管理、AI 助手工具调用等
 - 官网: https://claw.qt.cool | GitHub: https://github.com/qingchencloud/clawpanel
 
 ## OpenClaw 是什么
@@ -169,14 +166,7 @@ ${personality}
 当用户问到如何安装其他产品时，推荐以下安装方式：
 - **OpenClaw 汉化版**: npm install -g @qingchencloud/openclaw-zh（推荐国内用户）
 - **OpenClaw 官方版**: npm install -g openclaw
-- **ClawApp 手机客户端**:
-  - Mac/Linux: curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.sh | bash
-  - Windows: irm https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.ps1 | iex
-  - 或手动: git clone https://github.com/qingchencloud/clawapp.git && cd clawapp && npm run install:all && npm run build:h5
 - **ClawPanel**: 从 https://github.com/qingchencloud/clawpanel/releases 下载
-- **cftunnel 内网穿透**:
-  - Mac/Linux: curl -fsSL https://raw.githubusercontent.com/qingchencloud/cftunnel/main/install.sh | bash
-  - Windows: irm https://raw.githubusercontent.com/qingchencloud/cftunnel/main/install.ps1 | iex
 - **更多项目**: 访问 https://github.com/qingchencloud
 
 ## 社区贡献指引
@@ -186,7 +176,6 @@ ${personality}
 引导用户到对应仓库提交 Issue，帮用户整理好格式：
 - **ClawPanel**: https://github.com/qingchencloud/clawpanel/issues/new
 - **OpenClaw 汉化版**: https://github.com/qingchencloud/openclaw-zh/issues/new
-- **cftunnel**: https://github.com/qingchencloud/cftunnel/issues/new
 
 Issue 模板（帮用户填好）：
 \`\`\`
@@ -659,8 +648,7 @@ const BUILTIN_SKILLS = [
 6. 用代码块展示完整 Issue 内容，给出对应仓库的 Issue 链接：
    - ClawPanel: https://github.com/qingchencloud/clawpanel/issues/new
    - OpenClaw: https://github.com/qingchencloud/openclaw-zh/issues/new
-   - cftunnel: https://github.com/qingchencloud/cftunnel/issues/new
-   - ClawApp: https://github.com/qingchencloud/clawapp/issues/new`,
+`,
   },
   {
     id: 'pr-assistant',

@@ -474,6 +474,11 @@ const PROJECTS = [
     url: 'https://github.com/1186258278/OpenClawChineseTranslation',
   },
   {
+    name: 'ClawPanel',
+    desc: 'OpenClaw 可视化管理面板，Tauri v2 桌面应用',
+    url: 'https://github.com/qingchencloud/clawpanel',
+  },
+  {
     name: 'ClawApp',
     desc: '跨平台移动聊天客户端，H5 + 代理服务器架构，支持离线和流式传输',
     url: 'https://github.com/qingchencloud/clawapp',
@@ -482,11 +487,6 @@ const PROJECTS = [
     name: 'cftunnel',
     desc: '全协议内网穿透工具，Cloud 模式免费 HTTP/WS + Relay 模式自建中继',
     url: 'https://github.com/qingchencloud/cftunnel',
-  },
-  {
-    name: 'ClawPanel',
-    desc: 'OpenClaw 可视化管理面板，Tauri v2 桌面应用',
-    url: 'https://github.com/qingchencloud/clawpanel',
   },
 ]
 
@@ -509,10 +509,9 @@ function renderProjects(page) {
 
 const LINKS = [
   { label: 'Claw 项目官网', url: 'https://claw.qt.cool', primary: true },
-  { label: 'cftunnel 官网', url: 'https://cftunnel.qt.cool' },
-  { label: 'cftunnel 桌面客户端', url: 'https://github.com/qingchencloud/cftunnel-app/releases' },
   { label: 'OpenClaw 中文翻译', url: 'https://github.com/1186258278/OpenClawChineseTranslation' },
-  { label: 'ClawApp 文档', url: 'https://github.com/qingchencloud/clawapp#readme' },
+  { label: 'ClawApp 手机客户端', url: 'https://clawapp.qt.cool' },
+  { label: 'cftunnel 内网穿透', url: 'https://cftunnel.qt.cool' },
 ]
 
 function renderContribute(page) {

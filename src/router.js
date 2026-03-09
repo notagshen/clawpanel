@@ -150,3 +150,7 @@ function escHtml(s) {
 export function getCurrentRoute() {
   return window.location.hash.slice(1) || _defaultRoute
 }
+
+export function reloadCurrentRoute() {
+  loadRoute()
+}

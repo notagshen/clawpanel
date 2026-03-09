@@ -6,7 +6,7 @@ import { renderSidebar, openMobileSidebar } from './components/sidebar.js'
 import { initTheme } from './lib/theme.js'
 import { detectOpenclawStatus, isOpenclawReady, isGatewayRunning, onGatewayChange, startGatewayPoll, onGuardianGiveUp, resetAutoRestart, loadActiveInstance, getActiveInstance, onInstanceChange } from './lib/app-state.js'
 import { wsClient } from './lib/ws-client.js'
-import { api } from './lib/tauri-api.js'
+import { api, checkBackendHealth, isBackendOnline, onBackendStatusChange } from './lib/tauri-api.js'
 import { version as APP_VERSION } from '../package.json'
 import { statusIcon } from './lib/icons.js'
 import { tryShowEngagement } from './components/engagement.js'
@@ -59,6 +59,82 @@ const _logoSvg = `<svg class="login-logo" viewBox="0 0 24 24" fill="none" stroke
 function _hideSplash() {
   const splash = document.getElementById('splash')
   if (splash) { splash.classList.add('hide'); setTimeout(() => splash.remove(), 500) }
+}
+
+// === 后端离线检测（Web 模式） ===
+let _backendRetryTimer = null
+
+function showBackendDownOverlay() {
+  if (document.getElementById('backend-down-overlay')) return
+  _hideSplash()
+  const overlay = document.createElement('div')
+  overlay.id = 'backend-down-overlay'
+  overlay.innerHTML = `
+    <div class="login-card" style="text-align:center">
+      ${_logoSvg}
+      <div class="login-title" style="color:var(--error,#ef4444)">后端未启动</div>
+      <div class="login-desc" style="line-height:1.8">
+        ClawPanel 后端服务未运行，无法获取真实数据。<br>
+        <span style="font-size:12px;color:var(--text-tertiary)">请在服务器上启动后端服务后刷新页面。</span>
+      </div>
+      <div style="background:var(--bg-tertiary);border-radius:var(--radius-md,8px);padding:14px 18px;margin:16px 0;text-align:left;font-family:var(--font-mono,monospace);font-size:12px;line-height:1.8;user-select:all;color:var(--text-secondary)">
+        <div style="color:var(--text-tertiary);margin-bottom:4px"># 开发模式</div>
+        npm run dev<br>
+        <div style="color:var(--text-tertiary);margin-top:8px;margin-bottom:4px"># 生产模式</div>
+        npm run preview
+      </div>
+      <button class="login-btn" id="btn-backend-retry" style="margin-top:8px">
+        <span id="backend-retry-text">重新检测</span>
+      </button>
+      <div id="backend-retry-status" style="font-size:12px;color:var(--text-tertiary);margin-top:12px"></div>
+      <div style="margin-top:16px;font-size:11px;color:#aaa">
+        <a href="https://claw.qt.cool" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none">claw.qt.cool</a>
+        <span style="margin:0 6px">&middot;</span>v${APP_VERSION}
+      </div>
+    </div>
+  `
+  document.body.appendChild(overlay)
+
+  let retrying = false
+  const btn = overlay.querySelector('#btn-backend-retry')
+  const statusEl = overlay.querySelector('#backend-retry-status')
+  const textEl = overlay.querySelector('#backend-retry-text')
+
+  btn.addEventListener('click', async () => {
+    if (retrying) return
+    retrying = true
+    btn.disabled = true
+    textEl.textContent = '检测中...'
+    statusEl.textContent = ''
+
+    const ok = await checkBackendHealth()
+    if (ok) {
+      statusEl.textContent = '后端已连接，正在加载...'
+      statusEl.style.color = 'var(--success,#22c55e)'
+      overlay.classList.add('hide')
+      setTimeout(() => { overlay.remove(); location.reload() }, 600)
+    } else {
+      statusEl.textContent = '后端仍未响应，请确认服务已启动'
+      statusEl.style.color = 'var(--error,#ef4444)'
+      textEl.textContent = '重新检测'
+      btn.disabled = false
+      retrying = false
+    }
+  })
+
+  // 自动轮询：每 5 秒检测一次
+  if (_backendRetryTimer) clearInterval(_backendRetryTimer)
+  _backendRetryTimer = setInterval(async () => {
+    const ok = await checkBackendHealth()
+    if (ok) {
+      clearInterval(_backendRetryTimer)
+      _backendRetryTimer = null
+      statusEl.textContent = '后端已连接，正在加载...'
+      statusEl.style.color = 'var(--success,#22c55e)'
+      overlay.classList.add('hide')
+      setTimeout(() => { overlay.remove(); location.reload() }, 600)
+    }
+  }, 5000)
 }
 
 let _loginFailCount = 0
@@ -221,7 +297,6 @@ async function boot() {
   registerRoute('/agents', () => import('./pages/agents.js'))
   registerRoute('/gateway', () => import('./pages/gateway.js'))
   registerRoute('/memory', () => import('./pages/memory.js'))
-  registerRoute('/extensions', () => import('./pages/extensions.js'))
   registerRoute('/skills', () => import('./pages/skills.js'))
   registerRoute('/security', () => import('./pages/security.js'))
   registerRoute('/about', () => import('./pages/about.js'))
@@ -307,9 +382,20 @@ async function boot() {
       })
 
       // 守护放弃时，弹出恢复选项
-      onGuardianGiveUp(() => {
-        showGuardianRecovery()
-      })
+      if (window.__TAURI_INTERNALS__) {
+        import('@tauri-apps/api/event').then(async ({ listen }) => {
+          await listen('guardian-event', (e) => {
+            if (e.payload?.kind === 'give_up') showGuardianRecovery()
+          })
+        }).catch(() => {})
+        api.guardianStatus().then(status => {
+          if (status?.giveUp) showGuardianRecovery()
+        }).catch(() => {})
+      } else {
+        onGuardianGiveUp(() => {
+          showGuardianRecovery()
+        })
+      }
 
       // 实例切换时，重连 WebSocket + 重新检测状态
       onInstanceChange(async () => {
@@ -601,8 +687,17 @@ function startUpdateChecker() {
   _updateCheckTimer = setInterval(checkGlobalUpdate, UPDATE_CHECK_INTERVAL)
 }
 
-// 启动：先检查认证，再加载应用
+// 启动：先检查后端 → 认证 → 加载应用
 ;(async () => {
+  // Web 模式：先检测后端是否在线（不在线则显示提示，不加载应用）
+  if (!isTauri) {
+    const backendOk = await checkBackendHealth()
+    if (!backendOk) {
+      showBackendDownOverlay()
+      return
+    }
+  }
+
   const auth = await checkAuth()
   if (!auth.ok) await showLoginOverlay(auth.defaultPw)
   boot()

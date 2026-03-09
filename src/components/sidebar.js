@@ -1,10 +1,11 @@
 /**
  * 侧边导航栏
  */
-import { navigate, getCurrentRoute } from '../router.js'
+import { navigate, getCurrentRoute, reloadCurrentRoute } from '../router.js'
 import { toggleTheme, getTheme } from '../lib/theme.js'
 import { isOpenclawReady, getActiveInstance, switchInstance, onInstanceChange } from '../lib/app-state.js'
 import { api } from '../lib/tauri-api.js'
+import { toast } from './toast.js'
 import { version as APP_VERSION } from '../../package.json'
 
 const NAV_ITEMS_FULL = [
@@ -36,7 +37,6 @@ const NAV_ITEMS_FULL = [
   {
     section: '扩展',
     items: [
-      { route: '/extensions', label: '扩展工具', icon: 'extensions' },
       { route: '/skills', label: 'Skills', icon: 'skills' },
     ]
   },
@@ -61,12 +61,6 @@ const NAV_ITEMS_SETUP = [
     items: [
       { route: '/setup', label: '初始设置', icon: 'setup' },
       { route: '/assistant', label: 'AI 助手', icon: 'assistant' },
-    ]
-  },
-  {
-    section: '',
-    items: [
-      { route: '/extensions', label: '扩展工具', icon: 'extensions' },
     ]
   },
   {
@@ -215,8 +209,11 @@ export function renderSidebar(el) {
         if (id !== getActiveInstance().id) {
           opt.style.opacity = '0.5'
           switchInstance(id).then(() => {
+            const inst = getActiveInstance()
+            const desc = inst.type === 'local' ? '本机' : inst.name
+            toast(`已切换到 ${desc} — 模型配置、Agent 等将管理该实例`, 'success')
             renderSidebar(el)
-            navigate(getCurrentRoute())
+            reloadCurrentRoute()
           })
         }
         return
@@ -281,16 +278,20 @@ async function _toggleInstanceDropdown(sidebarEl) {
     const [data, health] = await Promise.all([api.instanceList(), api.instanceHealthAll()])
     const healthMap = Object.fromEntries((health || []).map(h => [h.id, h]))
     const activeId = getActiveInstance().id
-    let html = ''
+    let html = '<div class="instance-hint">切换后，模型配置、Agent 等页面将管理对应实例</div>'
     for (const inst of data.instances) {
       const h = healthMap[inst.id] || {}
       const active = inst.id === activeId ? ' active' : ''
       const dot = h.online !== false ? 'online' : 'offline'
       const badge = inst.type === 'docker' ? '<span class="instance-badge docker">🦞 龙虾</span>' : inst.type === 'remote' ? '<span class="instance-badge remote">远程</span>' : ''
+      const port = inst.endpoint ? inst.endpoint.match(/:(\d+)/)?.[1] : ''
+      const portTag = port ? `<span class="instance-port">:${port}</span>` : ''
       html += `<div class="instance-option${active}" data-id="${inst.id}">
         <span class="instance-dot ${dot}"></span>
         <span class="instance-opt-name">${_escSidebar(inst.name)}</span>
+        ${portTag}
         ${badge}
+        ${active ? '<span class="instance-active-tag">当前</span>' : ''}
       </div>`
     }
     html += '<div class="instance-divider"></div>'
