@@ -240,13 +240,13 @@ async function openConfigDialog(pid, page, state) {
   }).join('')
 
   const guideHtml = reg.guide?.length ? `
-    <div style="background:var(--bg-tertiary);padding:12px 16px;border-radius:var(--radius-md);margin-bottom:var(--space-md)">
-      <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:6px">接入步骤</div>
-      <ol style="margin:0;padding-left:20px;font-size:var(--font-size-sm);color:var(--text-secondary);line-height:1.8">
+    <details style="background:var(--bg-tertiary);padding:12px 16px;border-radius:var(--radius-md);margin-bottom:var(--space-md)">
+      <summary style="font-weight:600;font-size:var(--font-size-sm);cursor:pointer;user-select:none">接入步骤 <span style="color:var(--text-tertiary);font-weight:400">（点击展开）</span></summary>
+      <ol style="margin:8px 0 0;padding-left:20px;font-size:var(--font-size-sm);color:var(--text-secondary);line-height:1.8">
         ${reg.guide.map(s => `<li>${s}</li>`).join('')}
       </ol>
       ${reg.guideFooter || ''}
-    </div>
+    </details>
   ` : ''
 
   const content = `

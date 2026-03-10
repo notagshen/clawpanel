@@ -286,7 +286,8 @@ mark {
   flex-direction: column;
   box-shadow: var(--shadow-lg);
 }
-.modal-body {
+.modal-body,
+.modal-content-body {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
