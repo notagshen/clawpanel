@@ -915,16 +915,24 @@ fn is_plugin_builtin(plugin_id: &str) -> bool {
         }
         #[cfg(target_os = "macos")]
         {
-            dirs.push(PathBuf::from("/opt/homebrew/lib/node_modules/@qingchencloud/openclaw-zh"));
+            dirs.push(PathBuf::from(
+                "/opt/homebrew/lib/node_modules/@qingchencloud/openclaw-zh",
+            ));
             dirs.push(PathBuf::from("/opt/homebrew/lib/node_modules/openclaw"));
-            dirs.push(PathBuf::from("/usr/local/lib/node_modules/@qingchencloud/openclaw-zh"));
+            dirs.push(PathBuf::from(
+                "/usr/local/lib/node_modules/@qingchencloud/openclaw-zh",
+            ));
             dirs.push(PathBuf::from("/usr/local/lib/node_modules/openclaw"));
         }
         #[cfg(target_os = "linux")]
         {
-            dirs.push(PathBuf::from("/usr/local/lib/node_modules/@qingchencloud/openclaw-zh"));
+            dirs.push(PathBuf::from(
+                "/usr/local/lib/node_modules/@qingchencloud/openclaw-zh",
+            ));
             dirs.push(PathBuf::from("/usr/local/lib/node_modules/openclaw"));
-            dirs.push(PathBuf::from("/usr/lib/node_modules/@qingchencloud/openclaw-zh"));
+            dirs.push(PathBuf::from(
+                "/usr/lib/node_modules/@qingchencloud/openclaw-zh",
+            ));
             dirs.push(PathBuf::from("/usr/lib/node_modules/openclaw"));
         }
         dirs
@@ -1219,8 +1227,14 @@ pub async fn install_qqbot_plugin(app: tauri::AppHandle) -> Result<String, Strin
     };
     if all_output.contains("native binding") || all_output.contains("Failed to start CLI") {
         let _ = app.emit("plugin-log", "");
-        let _ = app.emit("plugin-log", "⚠️ 检测到 OpenClaw CLI 原生依赖问题（native binding 缺失）");
-        let _ = app.emit("plugin-log", "这是 OpenClaw 的上游依赖问题，非 QQBot 插件本身的问题。");
+        let _ = app.emit(
+            "plugin-log",
+            "⚠️ 检测到 OpenClaw CLI 原生依赖问题（native binding 缺失）",
+        );
+        let _ = app.emit(
+            "plugin-log",
+            "这是 OpenClaw 的上游依赖问题，非 QQBot 插件本身的问题。",
+        );
         let _ = app.emit("plugin-log", "请在终端手动执行以下命令重装 OpenClaw：");
         let _ = app.emit("plugin-log", "  npm i -g @qingchencloud/openclaw-zh@latest --registry https://registry.npmmirror.com");
         let _ = app.emit("plugin-log", "重装完成后再回来安装 QQBot 插件。");

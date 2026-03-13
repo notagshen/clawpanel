@@ -641,7 +641,12 @@ pub async fn upgrade_openclaw(
     let _ = app.emit("upgrade-log", "配置 Git HTTPS 模式...");
     // 先清除旧的 insteadOf 规则，再逐条添加（git config 不带 --add 会覆盖，只保留最后一条）
     let _ = Command::new("git")
-        .args(["config", "--global", "--unset-all", "url.https://github.com/.insteadOf"])
+        .args([
+            "config",
+            "--global",
+            "--unset-all",
+            "url.https://github.com/.insteadOf",
+        ])
         .output();
     for from in &[
         "ssh://git@github.com/",
@@ -682,7 +687,10 @@ pub async fn upgrade_openclaw(
     let mut child = npm_command()
         .args(["install", "-g", &pkg, "--registry", registry, "--verbose"])
         .env("GIT_TERMINAL_PROMPT", "0")
-        .env("GIT_SSH_COMMAND", "ssh -o BatchMode=yes -o StrictHostKeyChecking=no")
+        .env(
+            "GIT_SSH_COMMAND",
+            "ssh -o BatchMode=yes -o StrictHostKeyChecking=no",
+        )
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -738,7 +746,10 @@ pub async fn upgrade_openclaw(
             let mut child2 = npm_command()
                 .args(["install", "-g", &pkg, "--registry", fallback, "--verbose"])
                 .env("GIT_TERMINAL_PROMPT", "0")
-                .env("GIT_SSH_COMMAND", "ssh -o BatchMode=yes -o StrictHostKeyChecking=no")
+                .env(
+                    "GIT_SSH_COMMAND",
+                    "ssh -o BatchMode=yes -o StrictHostKeyChecking=no",
+                )
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn()
@@ -754,7 +765,10 @@ pub async fn upgrade_openclaw(
                     for line in BufReader::new(pipe).lines().map_while(Result::ok) {
                         let _ = app3.emit("upgrade-log", &line);
                         stderr_lines4.lock().unwrap().push(line);
-                        if p < 75 { p += 2; let _ = app3.emit("upgrade-progress", p); }
+                        if p < 75 {
+                            p += 2;
+                            let _ = app3.emit("upgrade-progress", p);
+                        }
                     }
                 }
             });
@@ -765,12 +779,28 @@ pub async fn upgrade_openclaw(
             }
             let _ = handle2.join();
             let _ = app.emit("upgrade-progress", 80);
-            let status2 = child2.wait().map_err(|e| format!("等待重试进程失败: {e}"))?;
+            let status2 = child2
+                .wait()
+                .map_err(|e| format!("等待重试进程失败: {e}"))?;
             let _ = app.emit("upgrade-progress", 100);
             if !status2.success() {
-                let code2 = status2.code().map(|c| c.to_string()).unwrap_or("unknown".into());
-                let tail = stderr_lines3.lock().unwrap().iter().rev().take(15).rev().cloned().collect::<Vec<_>>().join("\n");
-                return Err(format!("升级失败（镜像源和官方源均失败），exit code: {code2}\n{tail}"));
+                let code2 = status2
+                    .code()
+                    .map(|c| c.to_string())
+                    .unwrap_or("unknown".into());
+                let tail = stderr_lines3
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .rev()
+                    .take(15)
+                    .rev()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                return Err(format!(
+                    "升级失败（镜像源和官方源均失败），exit code: {code2}\n{tail}"
+                ));
             }
             let _ = app.emit("upgrade-log", "✅ 官方源安装成功");
         } else {
