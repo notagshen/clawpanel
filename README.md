@@ -154,12 +154,16 @@ docker run -d --name clawpanel --restart unless-stopped \
 - **仪表盘** — 系统概览，服务状态实时监控，快捷操作
 - **服务管理** — OpenClaw 启停控制、版本检测与一键升级、Gateway 安装/卸载、配置备份与还原
 - **模型配置** — 多服务商管理、模型增删改查、批量连通性测试、延迟检测、拖拽排序、自动保存+撤销
-- **网关配置** — 端口、运行模式（本地/云端）、访问权限（本机/局域网）、认证 Token、Tailscale 组网
-- **消息渠道** — 统一管理 Telegram、Discord 等外部消息接入，内置 QQ 机器人配置与凭证校验
+- **网关配置** — 端口、访问权限（本机/局域网）、认证 Token、Tailscale 组网
+- **消息渠道** — 统一管理 Telegram、Discord、飞书、钉钉、QQ 等消息接入，支持同平台多 Agent 绑定
+- **通信与自动化** — 消息设置、广播策略、斜杠命令、Webhook、执行审批转发等高级配置
+- **使用情况** — Token 用量、API 费用、热门模型/服务商/工具排行、每日用量图表
 - **Agent 管理** — Agent 增删改查、身份编辑、模型配置、工作区管理
-- **聊天** — 流式响应、Markdown 渲染、会话管理、Agent 选择、快捷指令
+- **聊天** — 流式响应、Markdown 渲染、会话管理、/fast /think /verbose /reasoning 命令、Compaction 状态指示
+- **定时任务** — Cron 定时执行，支持多渠道投递
 - **日志查看** — 多日志源实时查看与关键词搜索
 - **记忆管理** — 记忆文件查看/编辑、分类管理、ZIP 导出、Agent 切换
+- **晴辰云 AI 接口** — 官方 AI 服务，签到送额度、充值最低 3 折消耗、未消耗包退
 - **扩展工具** — cftunnel 内网穿透管理、ClawApp 状态监控
 - **关于** — 版本信息、社群入口、相关项目链接、一键升级
 
@@ -405,6 +409,32 @@ npm run tauri build -- --bundles nsis
 ```
 
 产物位于 `src-tauri/target/release/` 目录。
+
+### Web 开发版（无需 Rust/Tauri）
+
+如果你只想开发前端或部署 Web 版，**不需要安装 Rust**：
+
+```bash
+# 克隆并安装
+git clone https://github.com/qingchencloud/clawpanel.git
+cd clawpanel
+npm install
+
+# 开发模式（热更新，自带 API mock 后端）
+npm run dev
+# 浏览器打开 http://localhost:1420
+
+# 构建生产版本
+npm run build
+
+# 启动 Web 服务器（Headless，适用于 Linux/ARM/Docker）
+npm run serve
+# 默认监听 0.0.0.0:1420，支持 --port 和 --host 参数
+```
+
+Web 版功能与桌面版一致，后端通过 `scripts/dev-api.js` 调用本机 OpenClaw CLI 实现。
+
+> **ARM/Armbian 用户**：Web 模式天然兼容 ARM64 设备，详见 [Armbian 部署指南](docs/armbian-deploy.md)。
 
 ## 快速上手
 
