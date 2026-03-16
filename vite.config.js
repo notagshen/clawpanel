@@ -21,7 +21,7 @@ export default defineConfig({
   },
   clearScreen: false,
   server: {
-    port: 1421,
+    port: 1420,
     strictPort: true,
     proxy: {
       '/ws': {
