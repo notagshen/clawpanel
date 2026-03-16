@@ -84,21 +84,29 @@ async function loadDashboardData(page, fullRefresh = false) {
   if (servicesRes.status === 'rejected') toast('服务状态加载失败', 'error')
   if (versionRes.status === 'rejected') toast('版本信息加载失败', 'error')
 
-  // 自愈：补全关键默认值
+  // 自愈：补全关键默认值（先重新读取最新配置再 patch，避免用缓存覆盖其他页面的写入）
   if (config) {
-    let patched = false
-    if (!config.gateway) config.gateway = {}
-    if (!config.gateway.mode) { config.gateway.mode = 'local'; patched = true }
-    // 修复旧版错误：mode 不应在顶层（OpenClaw 不认识）
-    if (config.mode) { delete config.mode; patched = true }
-    if (!config.tools || config.tools.profile !== 'full') {
-      config.tools = { profile: 'full', sessions: { visibility: 'all' }, ...(config.tools || {}) }
-      config.tools.profile = 'full'
-      if (!config.tools.sessions) config.tools.sessions = {}
-      config.tools.sessions.visibility = 'all'
-      patched = true
+    let needsPatch = false
+    if (!config.gateway?.mode) needsPatch = true
+    if (config.mode) needsPatch = true
+    if (!config.tools || config.tools.profile !== 'full') needsPatch = true
+    if (needsPatch) {
+      try {
+        const freshConfig = await api.readOpenclawConfig()
+        let patched = false
+        if (!freshConfig.gateway) freshConfig.gateway = {}
+        if (!freshConfig.gateway.mode) { freshConfig.gateway.mode = 'local'; patched = true }
+        if (freshConfig.mode) { delete freshConfig.mode; patched = true }
+        if (!freshConfig.tools || freshConfig.tools.profile !== 'full') {
+          freshConfig.tools = { profile: 'full', sessions: { visibility: 'all' }, ...(freshConfig.tools || {}) }
+          freshConfig.tools.profile = 'full'
+          if (!freshConfig.tools.sessions) freshConfig.tools.sessions = {}
+          freshConfig.tools.sessions.visibility = 'all'
+          patched = true
+        }
+        if (patched) api.writeOpenclawConfig(freshConfig).catch(() => {})
+      } catch {}
     }
-    if (patched) api.writeOpenclawConfig(config).catch(() => {})
   }
 
   renderStatCards(page, services, version, [], config)

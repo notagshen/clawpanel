@@ -3329,7 +3329,7 @@ const handlers = {
   },
   skills_skillhub_check() {
     try {
-      const out = execSync('skillhub --version', { encoding: 'utf8', timeout: 5000 })
+      const out = execSync('skillhub --cli-version', { encoding: 'utf8', timeout: 5000 })
       return { installed: true, version: out.trim() }
     } catch {
       return { installed: false }
